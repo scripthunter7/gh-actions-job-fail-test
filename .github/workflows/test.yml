@@ -1,0 +1,42 @@
+name: Test workflow
+
+env:
+  NODE_VERSION: 20
+
+on:
+  workflow_dispatch:
+    inputs:
+      fail_first_job:
+        type: choice
+        description: 'Whether to fail the first job'
+        options:
+            - 'true'
+            - 'false'
+        default: 'false'
+
+jobs:
+  first_job:
+    name: First job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Just a step
+        run: |
+            echo "First job is done"
+      - name: Fail first job if needed
+        run: |
+            if [ "${{ github.event.inputs.fail_first_job }}" == "true" ]; then
+              echo "Failing the first job"
+              exit 1
+            fi
+
+  second_job:
+    name: Second job
+    runs-on: ubuntu-latest
+    needs: first_job
+    # https://docs.github.com/en/actions/learn-github-actions/contexts#needs-context
+    # TODO: extend it with more conditions, if needed
+    if: ${{ always() && needs.first_job.result == 'failure' }}
+    steps:
+      - name: Just a step
+        run: |
+            echo "Second job is done"
